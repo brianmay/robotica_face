@@ -5,13 +5,24 @@ defmodule RoboticaFace.Application do
 
   use Application
 
+  def get_tortoise_client_id do
+    {:ok, hostname} = :inet.gethostname()
+    hostname = to_string(hostname)
+    "robotica_face-#{hostname}"
+  end
+
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
       # Start the Ecto repository
       # RoboticaFace.Repo,
       # Start the endpoint when the application starts
-      RoboticaFaceWeb.Endpoint
+      RoboticaFaceWeb.Endpoint,
+      {Tortoise.Connection,
+       client_id: get_tortoise_client_id(),
+       handler: {RoboticaFace.Handler, []},
+       server: {Tortoise.Transport.Tcp, host: "proxy.pri", port: 1883},
+       subscriptions: [{"stat/sonoff/POWER", 0}]}
       # Starts a worker by calling: RoboticaFace.Worker.start_link(arg)
       # {RoboticaFace.Worker, arg},
     ]

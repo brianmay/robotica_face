@@ -43,7 +43,8 @@ defmodule RoboticaFace.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:joken, "~> 2.0-rc3"}
+      {:joken, "~> 2.0-rc3"},
+      {:tortoise, "~> 0.9.2"}
     ]
   end
 

@@ -9,7 +9,7 @@ defmodule RoboticaFace.Application do
     # List all child processes to be supervised
     children = [
       # Start the Ecto repository
-      RoboticaFace.Repo,
+      # RoboticaFace.Repo,
       # Start the endpoint when the application starts
       RoboticaFaceWeb.Endpoint
       # Starts a worker by calling: RoboticaFace.Worker.start_link(arg)

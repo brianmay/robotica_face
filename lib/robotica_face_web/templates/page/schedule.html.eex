@@ -1,0 +1,23 @@
+<section class="phx-hero">
+  <h1><%= gettext "Welcome to %{name}!", name: "Robotica" %></h1>
+  <p>A system for controlling IOT schedules<br/>that does not compromise speed and maintainability.</p>
+</section>
+
+<table>
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Message</th>
+    </th>
+  </thead>
+  <tbody>
+    <%= for step <- @schedule do %>
+      <%= for task <- step["tasks"] do %>
+        <tr>
+          <td><%= date_time_to_local(step["required_time"]) %></td>
+          <td><%= task["action"]["message"]["text"] %></td>
+        </tr>
+      <% end %>
+    <% end %>
+   </tbody>
+</table>

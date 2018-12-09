@@ -22,9 +22,11 @@ defmodule RoboticaFace.Application do
        client_id: get_tortoise_client_id(),
        handler: {RoboticaFace.Handler, []},
        server: {Tortoise.Transport.Tcp, host: "proxy.pri", port: 1883},
-       subscriptions: [{"stat/sonoff/POWER", 0}]}
-      # Starts a worker by calling: RoboticaFace.Worker.start_link(arg)
-      # {RoboticaFace.Worker, arg},
+       subscriptions: [
+         {"stat/sonoff/POWER", 0},
+         {"schedule/robotica-silverfish", 0}
+       ]},
+      {RoboticaFace.Schedule, name: :schedule}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

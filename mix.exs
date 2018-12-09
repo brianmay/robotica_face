@@ -47,7 +47,9 @@ defmodule RoboticaFace.MixProject do
       {:tortoise, "~> 0.9.2"},
       {:guardian, "~> 1.0"},
       {:comeonin, "~> 4.0"},
-      {:bcrypt_elixir, "~> 1.0"}
+      {:bcrypt_elixir, "~> 1.0"},
+      {:calendar, "~> 0.17.2"},
+      {:timex, "~> 3.1"}
     ]
   end
 

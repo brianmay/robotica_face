@@ -11,6 +11,7 @@ defmodule RoboticaFace.Handler do
     # Send request for current power level, as we have no idea.
     client_id = RoboticaFace.Application.get_tortoise_client_id()
     Tortoise.publish(client_id, "cmnd/sonoff/power", "", qos: 0)
+    Tortoise.publish(client_id, "request/robotica-silverfish/schedule", "", qos: 0)
     {:ok, state}
   end
 
@@ -26,6 +27,15 @@ defmodule RoboticaFace.Handler do
 
   def handle_message(["stat", "sonoff", "POWER"], "OFF", state) do
     Logger.info("sonoff OFF")
+    {:ok, state}
+  end
+
+  def handle_message(["schedule", "robotica-silverfish"], schedule, state) do
+    Logger.info("Got updated schedule")
+    case Poison.decode(schedule) do
+      {:ok, schedule} -> RoboticaFace.Schedule.set_schedule(:schedule, schedule)
+      {:error, _} -> Logger.info("Invalid schedule received.")
+    end
     {:ok, state}
   end
 

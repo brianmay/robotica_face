@@ -68,8 +68,8 @@ config :phoenix, :plug_init_mode, :runtime
 
 # Configure your database
 config :robotica_face, RoboticaFace.Repo,
-  username: "postgres",
-  password: "postgres",
-  database: "robotica_face_dev",
+  username: "robotica_face",
+  password: "robotica_face",
+  database: "robotica_face",
   hostname: "localhost",
   pool_size: 10

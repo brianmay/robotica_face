@@ -44,7 +44,10 @@ defmodule RoboticaFace.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:joken, "~> 2.0-rc3"},
-      {:tortoise, "~> 0.9.2"}
+      {:tortoise, "~> 0.9.2"},
+      {:guardian, "~> 1.0"},
+      {:comeonin, "~> 4.0"},
+      {:bcrypt_elixir, "~> 1.0"}
     ]
   end
 

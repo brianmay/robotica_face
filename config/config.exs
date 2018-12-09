@@ -17,6 +17,10 @@ config :robotica_face, RoboticaFaceWeb.Endpoint,
   render_errors: [view: RoboticaFaceWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: RoboticaFace.PubSub, adapter: Phoenix.PubSub.PG2]
 
+config :robotica_face, RoboticaFaceWeb.Auth.AuthAccessPipeline,
+  module: RoboticaFace.Auth.Guardian,
+  error_handler: RoboticaFaceWeb.Auth.AuthErrorHandler
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

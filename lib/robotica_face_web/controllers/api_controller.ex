@@ -56,6 +56,7 @@ defmodule RoboticaFaceWeb.ApiController do
 
             true ->
               RoboticaFace.Sonoff.turn_on()
+
               %{
                 fulfillmentText: "Turning TV on."
               }

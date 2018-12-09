@@ -47,4 +47,3 @@ defmodule RoboticaFace.Handler do
     :ok
   end
 end
-

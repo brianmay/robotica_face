@@ -7,6 +7,7 @@
   <thead>
     <tr>
       <th>Time</th>
+      <th>Locations</th>
       <th>Message</th>
     </th>
   </thead>
@@ -15,7 +16,9 @@
       <%= for task <- step["tasks"] do %>
         <tr>
           <td><%= date_time_to_local(step["required_time"]) %></td>
+          <td><%= Enum.join(task["locations"], ", ") %></td>
           <td><%= task["action"]["message"]["text"] %></td>
+          <td><%= inspect task["mark"] %></td>
         </tr>
       <% end %>
     <% end %>

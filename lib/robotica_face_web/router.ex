@@ -47,7 +47,7 @@ defmodule RoboticaFaceWeb.Router do
     pipe_through :ensure_auth
     pipe_through :admin_required
 
-    get "/schedule", PageController, :schedule
+    get "/schedule", ScheduleController, :upcoming_list
     resources "/users", UserController
   end
 

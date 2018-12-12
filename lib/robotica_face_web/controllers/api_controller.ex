@@ -1,6 +1,24 @@
 defmodule RoboticaFaceWeb.ApiController do
   use RoboticaFaceWeb, :controller
 
+  defp delta_to_string(scheduled, now) do
+    {:ok, seconds, _microseconds, _} = Calendar.DateTime.diff(scheduled, now)
+
+    IO.puts(seconds)
+
+    hours = div(seconds, 3600)
+    seconds = rem(seconds, 3600)
+
+    minutes = div(seconds, 60)
+    seconds = rem(seconds, 60)
+
+    cond do
+      hours > 0 -> "#{hours} hours, #{minutes} minutes and #{seconds} seconds"
+      minutes > 0 -> "#{minutes} minutes and #{seconds} seconds"
+      true -> "#{seconds} seconds"
+    end
+  end
+
   def index(conn, params) do
     IO.inspect(params)
     query = Map.get(params, "queryResult", %{})
@@ -26,9 +44,9 @@ defmodule RoboticaFaceWeb.ApiController do
           false
       end
 
-    case intent do
-      "projects/robotica-3746c/agent/intents/97e7f7df-4e1a-4bbe-8308-7e9a86789c69" ->
-        assigns =
+    assigns =
+      case intent do
+        "projects/robotica-3746c/agent/intents/97e7f7df-4e1a-4bbe-8308-7e9a86789c69" ->
           cond do
             not known_user ->
               %{
@@ -62,12 +80,35 @@ defmodule RoboticaFaceWeb.ApiController do
               }
           end
 
-        render(conn, "index.json", assigns)
+        "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
+          steps = RoboticaFace.Schedule.get_schedule(:schedule)
+          now = Calendar.DateTime.now_utc()
 
-      _ ->
-        render(conn, "index.json", %{
-          fulfillmentText: "Something went wrong! I am very sorry."
-        })
-    end
+          messages =
+            case steps do
+              [head | _] ->
+                head["tasks"]
+                |> Enum.map(fn task ->
+                  time = Timex.parse!(head["required_time"], "{ISO:Extended}")
+                  time_str = delta_to_string(time, now)
+                  msg = get_in(task, ["action", "message", "text"])
+                  "In #{time_str} #{msg}"
+                end)
+
+              _ ->
+                ["There are no tasks"]
+            end
+
+          %{
+            fulfillmentText: Enum.join(messages, ", ")
+          }
+
+        _ ->
+          %{
+            fulfillmentText: "Something went wrong! I am very sorry."
+          }
+      end
+
+    render(conn, "index.json", assigns)
   end
 end

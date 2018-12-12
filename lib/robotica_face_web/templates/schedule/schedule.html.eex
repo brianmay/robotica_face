@@ -19,6 +19,12 @@
           <td><%= Enum.join(task["locations"], ", ") %></td>
           <td><%= task["action"]["message"]["text"] %></td>
           <td><%= inspect task["mark"] %></td>
+          <td>
+            <li>
+                <%= link "Done", to: Routes.schedule_path(@conn, :mark, task["id"], "done"), method: :post%>,
+                <%= link "Postpone", to: Routes.schedule_path(@conn, :mark, task["id"], "postpone"), method: :post%>
+            </li>
+          </td>
         </tr>
       <% end %>
     <% end %>

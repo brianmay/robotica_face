@@ -16,7 +16,7 @@ defmodule RoboticaFaceWeb.ScheduleController do
   end
 
   defp tomorrow(date) do
-     Calendar.Date.next_day!(date)
+    Calendar.Date.next_day!(date)
   end
 
   def next_monday(date) do
@@ -54,8 +54,11 @@ defmodule RoboticaFaceWeb.ScheduleController do
             _ -> {midnight, "done"}
           end
 
-        "postpone" -> {midnight, "cancelled"}
-        _ -> {nil, nil}
+        "postpone" ->
+          {midnight, "cancelled"}
+
+        _ ->
+          {nil, nil}
       end
 
     if not is_nil(expires_time) do

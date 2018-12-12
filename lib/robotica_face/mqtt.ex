@@ -14,15 +14,18 @@ defmodule RoboticaFace.Mqtt do
   @spec publish_mark(String.t(), String.t(), DateTime) :: :ok | {:error, String.t()}
   def publish_mark(id, status, expires_time) do
     topic = "mark"
-    expires = expires_time
-              |> Calendar.DateTime.shift_zone!("UTC")
-              |> Calendar.DateTime.Format.iso8601()
+
+    expires =
+      expires_time
+      |> Calendar.DateTime.shift_zone!("UTC")
+      |> Calendar.DateTime.Format.iso8601()
+
     action = %{
       id: id,
       status: status,
-      expires_time: expires,
+      expires_time: expires
     }
+
     publish(topic, action)
   end
-
 end

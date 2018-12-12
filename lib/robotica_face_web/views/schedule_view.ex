@@ -7,9 +7,9 @@ defmodule RoboticaFaceWeb.ScheduleView do
         dt
         |> Calendar.DateTime.shift_zone!("Australia/Melbourne")
         |> Timex.format!("%F %T", :strftime)
+
       {:error, _} ->
         "Invalid dt"
     end
   end
-
 end

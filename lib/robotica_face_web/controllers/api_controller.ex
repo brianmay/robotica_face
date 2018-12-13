@@ -117,6 +117,49 @@ defmodule RoboticaFaceWeb.ApiController do
             fulfillmentText: Enum.join(messages, ", ")
           }
 
+        "projects/robotica-3746c/agent/intents/8059af23-6a9f-46a4-ab7f-7ea713a86d79" ->
+          parameters = Map.get(query, "parameters", %{})
+          query = parameters["query"]
+          {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
+          now = Calendar.DateTime.now_utc()
+          midnight = RoboticaFace.Date.tomorrow(now) |> RoboticaFace.Date.midnight_utc()
+
+          messages =
+            steps
+            |> Enum.filter(fn step ->
+              time = Timex.parse!(step["required_time"], "{ISO:Extended}")
+              Calendar.DateTime.before?(time, midnight)
+            end)
+            |> Enum.map(fn step ->
+              time = Timex.parse!(step["required_time"], "{ISO:Extended}")
+              time_str = delta_to_string(time, now)
+
+              m =
+                Enum.map(step["tasks"], fn task ->
+                  text = get_in(task, ["action", "message", "text"]) || ""
+                  matched = Enum.all?(String.split(query), fn word ->
+                      text =~ word
+                  end)
+                  case matched do
+                    true -> text
+                    false -> nil
+                  end
+                end)
+                |> Enum.filter(fn task -> not is_nil(task) end)
+                |> Enum.join(", ")
+
+              case m do
+                "" -> nil
+                m -> "In #{time_str} #{m}"
+              end
+            end)
+            |> Enum.filter(fn step -> not is_nil(step) end)
+
+          joined_messages = Enum.join(messages, ", ")
+          %{
+            fulfillmentText: "There were #{length(messages)} results. #{joined_messages}"
+          }
+
         _ ->
           %{
             fulfillmentText: "Something went wrong! I am very sorry."

@@ -30,29 +30,6 @@ defmodule RoboticaFaceWeb.ScheduleController do
     end
   end
 
-  defp tomorrow(date) do
-    Calendar.Date.next_day!(date)
-  end
-
-  def next_monday(date) do
-    # M 1 --> +7
-    # T 2 --> +6
-    # W 3 --> +5
-    # T 4 --> +4
-    # F 5 --> +3
-    # S 6 --> +2
-    # S 7 --> +1
-
-    day_of_week = Date.day_of_week(date)
-    add_days = 7 - day_of_week + 1
-    Calendar.Date.add!(date, add_days)
-  end
-
-  def midnight_utc(date) do
-    Calendar.DateTime.from_date_and_time_and_zone!(date, ~T[00:00:00], "Australia/Melbourne")
-    |> Calendar.DateTime.shift_zone!("UTC")
-  end
-
   def mark(conn, params) do
     id = params["task_id"]
     hostname = params["hostname"]
@@ -72,9 +49,9 @@ defmodule RoboticaFaceWeb.ScheduleController do
   end
 
   defp do_mark(conn, id, hostname, frequency, status) do
-    now = Calendar.DateTime.now!("Australia/Melbourne")
-    midnight = tomorrow(now) |> midnight_utc()
-    monday_midnight = next_monday(now) |> midnight_utc()
+    now = Calendar.DateTime.now_utc()
+    midnight = RoboticaFace.Date.tomorrow(now) |> RoboticaFace.Date.midnight_utc()
+    monday_midnight = RoboticaFace.Date.next_monday(now) |> RoboticaFace.Date.midnight_utc()
 
     {expires_time, status} =
       case status do

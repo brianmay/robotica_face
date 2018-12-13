@@ -4,8 +4,6 @@ defmodule RoboticaFaceWeb.ApiController do
   defp delta_to_string(scheduled, now) do
     {:ok, seconds, _microseconds, _} = Calendar.DateTime.diff(scheduled, now)
 
-    IO.puts(seconds)
-
     hours = div(seconds, 3600)
     seconds = rem(seconds, 3600)
 
@@ -92,13 +90,22 @@ defmodule RoboticaFaceWeb.ApiController do
 
               m =
                 Enum.map(step["tasks"], fn task ->
-                  get_in(task, ["action", "message", "text"])
+                  case task["mark"] do
+                    "done" -> nil
+                    "cancelled" -> nil
+                    _ -> get_in(task, ["action", "message", "text"])
+                  end
                 end)
+                |> Enum.filter(fn task -> not is_nil(task) end)
                 |> Enum.join(", ")
 
-              "In #{time_str} #{m}"
+              case m do
+                "" -> nil
+                m -> "In #{time_str} #{m}"
+              end
             end)
-            |> Enum.take(2)
+            |> Enum.filter(fn step -> not is_nil(step) end)
+            |> Enum.take(3)
 
           messages =
             case messages do

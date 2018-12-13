@@ -7,38 +7,52 @@ defmodule RoboticaFace.Schedule do
   end
 
   def init(_) do
-    {:ok, []}
+    {:ok, %{}}
   end
 
-  def set_schedule(pid, schedule) do
-    GenServer.call(pid, {:set, schedule})
+  def set_schedule(pid, hostname, schedule) do
+    GenServer.call(pid, {:set_schedule, hostname, schedule})
   end
 
-  def get_schedule(pid) do
-    GenServer.call(pid, {:get})
+  def get_host_list(pid) do
+    GenServer.call(pid, {:get_host_list})
   end
 
-  def get_tasks_by_id(pid, id) do
-    GenServer.call(pid, {:get_tasks_by_id, id})
+  def get_schedule(pid, hostname) do
+    GenServer.call(pid, {:get_schedule, hostname})
   end
 
-  def handle_call({:set, schedule}, _, _state) do
-    {:reply, nil, schedule}
+  def get_tasks_by_id(pid, hostname, id) do
+    GenServer.call(pid, {:get_tasks_by_id, hostname, id})
   end
 
-  def handle_call({:get}, _, state) do
-    {:reply, state, state}
+  def handle_call({:set_schedule, hostname, schedule}, _, state) do
+    {:reply, nil, Map.put(state, hostname, schedule)}
   end
 
-  def handle_call({:get_tasks_by_id, id}, _, state) do
-    tasks =
-      state
-      |> Enum.map(fn step ->
-        tasks = Enum.filter(step["tasks"], fn task -> task["id"] == id end)
-        %{step | "tasks" => tasks}
-      end)
-      |> Enum.filter(fn step -> length(step["tasks"]) > 0 end)
+  def handle_call({:get_host_list}, _, state) do
+    {:reply, Map.keys(state), state}
+  end
 
-    {:reply, tasks, state}
+  def handle_call({:get_schedule, hostname}, _, state) do
+    {:reply, Map.fetch(state, hostname), state}
+  end
+
+  def handle_call({:get_tasks_by_id, hostname, id}, _, state) do
+    case Map.fetch(state, hostname) do
+      {:ok, schedule} ->
+        tasks =
+          schedule
+          |> Enum.map(fn step ->
+            tasks = Enum.filter(step["tasks"], fn task -> task["id"] == id end)
+            %{step | "tasks" => tasks}
+          end)
+          |> Enum.filter(fn step -> length(step["tasks"]) > 0 end)
+
+        {:reply, {:ok, tasks}, state}
+
+      :error ->
+        {:reply, :error, state}
+    end
   end
 end

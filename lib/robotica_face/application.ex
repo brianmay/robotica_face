@@ -21,10 +21,10 @@ defmodule RoboticaFace.Application do
       {Tortoise.Connection,
        client_id: get_tortoise_client_id(),
        handler: {RoboticaFace.Handler, []},
-       server: {Tortoise.Transport.Tcp, host: "proxy.pri", port: 1883},
+       server: {Tortoise.Transport.Tcp, host: "localhost", port: 1883},
        subscriptions: [
          {"stat/sonoff/POWER", 0},
-         {"schedule/robotica-silverfish", 0}
+         {"schedule/#", 0}
        ]},
       {RoboticaFace.Schedule, name: :schedule}
     ]

@@ -81,22 +81,29 @@ defmodule RoboticaFaceWeb.ApiController do
           end
 
         "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
-          steps = RoboticaFace.Schedule.get_schedule(:schedule)
+          {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
           now = Calendar.DateTime.now_utc()
 
           messages =
-            case steps do
-              [head | _] ->
-                head["tasks"]
-                |> Enum.map(fn task ->
-                  time = Timex.parse!(head["required_time"], "{ISO:Extended}")
-                  time_str = delta_to_string(time, now)
-                  msg = get_in(task, ["action", "message", "text"])
-                  "In #{time_str} #{msg}"
-                end)
+            steps
+            |> Enum.map(fn step ->
+              time = Timex.parse!(step["required_time"], "{ISO:Extended}")
+              time_str = delta_to_string(time, now)
 
-              _ ->
-                ["There are no tasks"]
+              m =
+                Enum.map(step["tasks"], fn task ->
+                  get_in(task, ["action", "message", "text"])
+                end)
+                |> Enum.join(", ")
+
+              "In #{time_str} #{m}"
+            end)
+            |> Enum.take(2)
+
+          messages =
+            case messages do
+              [] -> ["There are no tasks"]
+              list -> list
             end
 
           %{

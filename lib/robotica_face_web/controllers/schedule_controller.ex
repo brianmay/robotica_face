@@ -1,17 +1,32 @@
 defmodule RoboticaFaceWeb.ScheduleController do
   use RoboticaFaceWeb, :controller
 
-  def upcoming_list(conn, _params) do
-    schedule = RoboticaFace.Schedule.get_schedule(:schedule)
-    render(conn, "schedule.html", schedule: schedule)
+  def upcoming_list(conn, params) do
+    hostname = params["hostname"]
+
+    case RoboticaFace.Schedule.get_schedule(:schedule, hostname) do
+      {:ok, schedule} ->
+        render(conn, "schedule.html", schedule: schedule, hostname: hostname)
+
+      :error ->
+        conn
+        |> put_view(RoboticaFaceWeb.ErrorView)
+        |> render("404.html")
+    end
   end
 
-  defp get_task_frequency(task_id) do
-    steps = RoboticaFace.Schedule.get_tasks_by_id(:schedule, task_id)
+  def host_list(conn, _params) do
+    host_list = RoboticaFace.Schedule.get_host_list(:schedule)
+    render(conn, "host_list.html", host_list: host_list)
+  end
+
+  defp get_task_frequency(hostname, task_id) do
+    steps = RoboticaFace.Schedule.get_tasks_by_id(:schedule, hostname, task_id)
 
     case steps do
-      [head | _] -> hd(head["tasks"])["frequency"]
-      _ -> nil
+      {:ok, [head | _]} -> hd(head["tasks"])["frequency"]
+      {:ok, _} -> nil
+      :error -> :error
     end
   end
 
@@ -40,14 +55,29 @@ defmodule RoboticaFaceWeb.ScheduleController do
 
   def mark(conn, params) do
     id = params["task_id"]
-    frequency = get_task_frequency(id)
+    hostname = params["hostname"]
+    status = params["status"]
 
+    frequency = get_task_frequency(hostname, id)
+
+    case frequency do
+      :error ->
+        conn
+        |> put_view(RoboticaFaceWeb.ErrorView)
+        |> render("404.html")
+
+      _ ->
+        do_mark(conn, id, hostname, frequency, status)
+    end
+  end
+
+  defp do_mark(conn, id, hostname, frequency, status) do
     now = Calendar.DateTime.now!("Australia/Melbourne")
     midnight = tomorrow(now) |> midnight_utc()
     monday_midnight = next_monday(now) |> midnight_utc()
 
     {expires_time, status} =
-      case params["status"] do
+      case status do
         "done" ->
           case frequency do
             "weekly" -> {monday_midnight, "done"}
@@ -66,11 +96,11 @@ defmodule RoboticaFaceWeb.ScheduleController do
 
       conn
       |> put_flash(:info, "Mark published.")
-      |> redirect(to: Routes.schedule_path(conn, :upcoming_list))
+      |> redirect(to: Routes.schedule_path(conn, :upcoming_list, hostname))
     else
       conn
       |> put_flash(:info, "Mark NOT published.")
-      |> redirect(to: Routes.schedule_path(conn, :upcoming_list))
+      |> redirect(to: Routes.schedule_path(conn, :upcoming_list, hostname))
     end
   end
 end

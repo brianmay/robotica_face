@@ -4,6 +4,8 @@
       <th>Time</th>
       <th>Locations</th>
       <th>Message</th>
+      <th>Marks</th>
+      <th>Actions</th>
     </th>
   </thead>
   <tbody>
@@ -15,10 +17,8 @@
           <td><%= task["action"]["message"]["text"] %></td>
           <td><%= task["mark"] %></td>
           <td>
-            <li>
-                <%= link "Done", to: Routes.schedule_path(@conn, :mark, @hostname, task["id"], "done"), method: :post%>,
-                <%= link "Postpone", to: Routes.schedule_path(@conn, :mark, @hostname, task["id"], "postpone"), method: :post%>
-            </li>
+            <%= link "Done", to: Routes.schedule_path(@conn, :mark, @hostname, task["id"], "done"), method: :post%>,
+            <%= link "Postpone", to: Routes.schedule_path(@conn, :mark, @hostname, task["id"], "postpone"), method: :post%>
           </td>
         </tr>
       <% end %>

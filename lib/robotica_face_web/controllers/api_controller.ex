@@ -11,10 +11,25 @@ defmodule RoboticaFaceWeb.ApiController do
     seconds = rem(seconds, 60)
 
     cond do
-      hours > 0 -> "#{hours} hours, #{minutes} minutes and #{seconds} seconds"
-      minutes > 0 -> "#{minutes} minutes and #{seconds} seconds"
+      hours > 1 -> "#{hours} hours, #{minutes} minutes"
+      hours == 1 -> "1 hour, #{minutes} minutes"
+      minutes > 1 -> "#{minutes} minutes"
+      minutes == 1 -> "1 minute"
+      seconds == 1 -> "1 second"
       true -> "#{seconds} seconds"
     end
+  end
+
+  defp expand_schedule(steps) do
+    steps
+    |> Enum.reduce([], fn step, acc ->
+      time = Timex.parse!(step["required_time"], "{ISO:Extended}")
+
+      Enum.reduce(step["tasks"], acc, fn task, task_acc ->
+        [{time, task} | task_acc]
+      end)
+    end)
+    |> Enum.reverse()
   end
 
   def index(conn, params) do
@@ -80,82 +95,54 @@ defmodule RoboticaFaceWeb.ApiController do
 
         "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
           {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
+          esteps = expand_schedule(steps)
           now = Calendar.DateTime.now_utc()
 
           messages =
-            steps
-            |> Enum.map(fn step ->
-              time = Timex.parse!(step["required_time"], "{ISO:Extended}")
-              time_str = delta_to_string(time, now)
-
-              m =
-                Enum.map(step["tasks"], fn task ->
-                  case task["mark"] do
-                    "done" -> nil
-                    "cancelled" -> nil
-                    _ -> get_in(task, ["action", "message", "text"])
-                  end
-                end)
-                |> Enum.filter(fn task -> not is_nil(task) end)
-                |> Enum.join(", ")
-
-              case m do
-                "" -> nil
-                m -> "In #{time_str} #{m}"
+            esteps
+            |> Enum.filter(fn {_, task} ->
+              case task["mark"] do
+                "done" -> false
+                "cancelled" -> false
+                _ -> true
               end
             end)
-            |> Enum.filter(fn step -> not is_nil(step) end)
-            |> Enum.take(3)
-
-          messages =
-            case messages do
-              [] -> ["There are no tasks"]
-              list -> list
-            end
+            |> Enum.map(fn {time, task} -> {time, get_in(task, ["action", "message", "text"])} end)
+            |> Enum.filter(fn {_, msg} -> not is_nil(msg) end)
+            |> Enum.map(fn {time, msg} ->
+              time_str = delta_to_string(time, now)
+              "In #{time_str}, #{msg}"
+            end)
+            |> Enum.take(5)
+            |> Enum.join(" ")
 
           %{
-            fulfillmentText: Enum.join(messages, ", ")
+            fulfillmentText: messages
           }
 
         "projects/robotica-3746c/agent/intents/8059af23-6a9f-46a4-ab7f-7ea713a86d79" ->
           parameters = Map.get(query, "parameters", %{})
           query = parameters["query"]
           {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
+          esteps = expand_schedule(steps)
           now = Calendar.DateTime.now_utc()
           midnight = RoboticaFace.Date.tomorrow(now) |> RoboticaFace.Date.midnight_utc()
 
           messages =
-            steps
-            |> Enum.filter(fn step ->
-              time = Timex.parse!(step["required_time"], "{ISO:Extended}")
-              Calendar.DateTime.before?(time, midnight)
+            esteps
+            |> Enum.filter(fn {time, _} -> Calendar.DateTime.before?(time, midnight) end)
+            |> Enum.map(fn {time, task} -> {time, get_in(task, ["action", "message", "text"])} end)
+            |> Enum.filter(fn {_, msg} -> not is_nil(msg) end)
+            |> Enum.filter(fn {_, msg} ->
+              Enum.all?(String.split(query), fn word -> msg =~ word end)
             end)
-            |> Enum.map(fn step ->
-              time = Timex.parse!(step["required_time"], "{ISO:Extended}")
+            |> Enum.map(fn {time, msg} ->
               time_str = delta_to_string(time, now)
-
-              m =
-                Enum.map(step["tasks"], fn task ->
-                  text = get_in(task, ["action", "message", "text"]) || ""
-                  matched = Enum.all?(String.split(query), fn word ->
-                      text =~ word
-                  end)
-                  case matched do
-                    true -> text
-                    false -> nil
-                  end
-                end)
-                |> Enum.filter(fn task -> not is_nil(task) end)
-                |> Enum.join(", ")
-
-              case m do
-                "" -> nil
-                m -> "In #{time_str} #{m}"
-              end
+              "In #{time_str}, #{msg}"
             end)
-            |> Enum.filter(fn step -> not is_nil(step) end)
 
-          joined_messages = Enum.join(messages, ", ")
+          joined_messages = Enum.join(messages, " ")
+
           %{
             fulfillmentText: "There were #{length(messages)} results. #{joined_messages}"
           }

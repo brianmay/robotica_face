@@ -125,88 +125,90 @@ defmodule RoboticaFaceWeb.ApiController do
       end
 
     assigns =
-      case intent do
-        "projects/robotica-3746c/agent/intents/97e7f7df-4e1a-4bbe-8308-7e9a86789c69" ->
-          cond do
-            not known_user ->
-              %{
-                fulfillmentText:
-                  "I am so sorry. I do not know you. Tux says never to talk to strange penguins. Go away."
-              }
-
-            parameters["lunch"] not in ["Yes", ""] ->
-              %{
-                fulfillmentText:
-                  "I am so sorry. The Kids must make lunch before turning on the TV."
-              }
-
-            parameters["teeth"] not in ["Yes", ""] ->
-              %{
-                fulfillmentText:
-                  "I am so sorry. The Kids must clean teeth before turning on the TV."
-              }
-
-            parameters["bed"] not in ["No", ""] ->
-              %{
-                fulfillmentText:
-                  "I am so sorry. The Kids will wake up the dog who will watch TV all night if you turn it on now."
-              }
-
-            true ->
-              RoboticaFace.Sonoff.turn_on()
-
-              %{
-                fulfillmentText: "Turning TV on."
-              }
-          end
-
-        "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
-          {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
-          now = Calendar.DateTime.now_utc()
-
-          messages =
-            steps
-            |> parse_steps()
-            |> filter_steps(&filter_todo_task?/1)
-            |> Enum.take(3)
-            |> steps_to_message(now)
-
-          IO.inspect(messages)
-
+      cond do
+        not known_user ->
           %{
-            fulfillmentText: messages || "There are no tasks"
+            fulfillmentText:
+              "I am so sorry. I do not know you. Tux says never to talk to strange penguins. Go away."
           }
 
-        "projects/robotica-3746c/agent/intents/8059af23-6a9f-46a4-ab7f-7ea713a86d79" ->
-          parameters = Map.get(query, "parameters", %{})
-          query = parameters["query"]
-          {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
-          now = Calendar.DateTime.now_utc()
-
-          midnight =
-            RoboticaFace.Date.tomorrow(now)
-            |> RoboticaFace.Date.midnight_utc()
-
-          steps =
-            steps
-            |> parse_steps()
-            |> filter_steps_before_time(midnight)
-            |> filter_steps(fn task -> filter_query_task?(task, query)
-            end)
-
-          message = steps_to_message(steps, now)
-          count = count_tasks(steps)
-
-          %{
-            fulfillmentText: "There were #{count} tasks. #{message}"
-          }
-
-        _ ->
-          %{
-            fulfillmentText: "Something went wrong! I am very sorry."
-          }
+        true ->
+          process_intent(intent, parameters)
       end
 
     render(conn, "index.json", assigns)
+  end
+
+  defp process_intent(intent, parameters) do
+    case intent do
+      "projects/robotica-3746c/agent/intents/97e7f7df-4e1a-4bbe-8308-7e9a86789c69" ->
+        cond do
+          parameters["lunch"] not in ["Yes", ""] ->
+            %{
+              fulfillmentText: "I am so sorry. The Kids must make lunch before turning on the TV."
+            }
+
+          parameters["teeth"] not in ["Yes", ""] ->
+            %{
+              fulfillmentText:
+                "I am so sorry. The Kids must clean teeth before turning on the TV."
+            }
+
+          parameters["bed"] not in ["No", ""] ->
+            %{
+              fulfillmentText:
+                "I am so sorry. The Kids will wake up the dog who will watch TV all night if you turn it on now."
+            }
+
+          true ->
+            RoboticaFace.Sonoff.turn_on()
+
+            %{
+              fulfillmentText: "Turning TV on."
+            }
+        end
+
+      "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
+        {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
+        now = Calendar.DateTime.now_utc()
+
+        messages =
+          steps
+          |> parse_steps()
+          |> filter_steps(&filter_todo_task?/1)
+          |> Enum.take(3)
+          |> steps_to_message(now)
+
+        %{
+          fulfillmentText: messages || "There are no tasks"
+        }
+
+      "projects/robotica-3746c/agent/intents/8059af23-6a9f-46a4-ab7f-7ea713a86d79" ->
+        query = parameters["query"]
+        {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
+        now = Calendar.DateTime.now_utc()
+
+        midnight =
+          RoboticaFace.Date.tomorrow(now)
+          |> RoboticaFace.Date.midnight_utc()
+
+        steps =
+          steps
+          |> parse_steps()
+          |> filter_steps_before_time(midnight)
+          |> filter_steps(fn task -> filter_query_task?(task, query) end)
+
+        message = steps_to_message(steps, now)
+        count = count_tasks(steps)
+
+        %{
+          fulfillmentText: "There were #{count} tasks. #{message}"
+        }
+
+      _ ->
+        %{
+          fulfillmentText: "Something went wrong! I am very sorry."
+        }
+    end
   end
 end

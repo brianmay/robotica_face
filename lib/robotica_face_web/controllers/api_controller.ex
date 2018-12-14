@@ -69,6 +69,20 @@ defmodule RoboticaFaceWeb.ApiController do
     end)
   end
 
+  defp task_to_msg(task) do
+    locations = Enum.join(task["locations"], ", ")
+    text = get_in(task, ["action", "message", "text"])
+    lights = get_in(task, ["action", "lights", "action"])
+    music_stop = get_in(task, ["action", "music", "stop"])
+
+    cond do
+      not is_nil(text) -> text
+      lights=="flash" -> "#{locations} Lights flash."
+      music_stop -> "#{locations} Music stop."
+    end
+
+  end
+
   defp steps_to_message(steps, now) do
     messages =
       steps
@@ -77,7 +91,7 @@ defmodule RoboticaFaceWeb.ApiController do
 
         msgs =
           Enum.map(step["tasks"], fn task ->
-            get_in(task, ["action", "message", "text"])
+            task_to_msg(task)
           end)
           |> Enum.filter(fn msg -> not is_nil(msg) end)
 

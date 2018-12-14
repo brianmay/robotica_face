@@ -20,16 +20,83 @@ defmodule RoboticaFaceWeb.ApiController do
     end
   end
 
-  defp expand_schedule(steps) do
+  defp parse_steps(steps) do
     steps
-    |> Enum.reduce([], fn step, acc ->
+    |> Enum.map(fn step ->
       time = Timex.parse!(step["required_time"], "{ISO:Extended}")
-
-      Enum.reduce(step["tasks"], acc, fn task, task_acc ->
-        [{time, task} | task_acc]
-      end)
+      %{step | "required_time" => time}
     end)
-    |> Enum.reverse()
+  end
+
+  defp count_tasks(steps) do
+    Enum.reduce(steps, 0, fn step, acc -> acc + length(step["tasks"]) end)
+  end
+
+  defp filter_steps(steps, filter_task?) do
+    steps
+    |> Enum.map(fn step ->
+      tasks = Enum.filter(step["tasks"], filter_task?)
+      %{step | "tasks" => tasks}
+    end)
+    |> Enum.filter(fn step ->
+      length(step["tasks"]) > 0
+    end)
+  end
+
+  defp filter_steps_before_time(steps, threshold) do
+    steps
+    |> Enum.filter(fn step ->
+      Calendar.DateTime.before?(step["required_time"], threshold)
+    end)
+  end
+
+  defp filter_todo_task?(task) do
+    case task["mark"] do
+      "done" -> false
+      "cancelled" -> false
+      _ -> true
+    end
+  end
+
+  defp filter_query_task?(task, query) do
+    msg = get_in(task, ["action", "message", "text"])
+
+    Enum.all?(String.split(query), fn word ->
+      case msg do
+        nil -> false
+        msg -> msg =~ word
+      end
+    end)
+  end
+
+  defp steps_to_message(steps, now) do
+    messages =
+      steps
+      |> Enum.map(fn step ->
+        time = step["required_time"]
+
+        msgs =
+          Enum.map(step["tasks"], fn task ->
+            get_in(task, ["action", "message", "text"])
+          end)
+          |> Enum.filter(fn msg -> not is_nil(msg) end)
+
+        {time, msgs}
+      end)
+      |> Enum.filter(fn {_, msgs} -> length(msgs) > 0 end)
+
+    case messages do
+      [] ->
+        nil
+
+      list ->
+        Enum.map(list, fn {time, msgs} ->
+          time_str = delta_to_string(time, now)
+          msg_str = Enum.join(msgs, " and ")
+          "In #{time_str}, #{msg_str}"
+        end)
+        |> Enum.join(" ")
+    end
   end
 
   def index(conn, params) do
@@ -95,56 +162,43 @@ defmodule RoboticaFaceWeb.ApiController do
 
         "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
           {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
-          esteps = expand_schedule(steps)
           now = Calendar.DateTime.now_utc()
 
           messages =
-            esteps
-            |> Enum.filter(fn {_, task} ->
-              case task["mark"] do
-                "done" -> false
-                "cancelled" -> false
-                _ -> true
-              end
-            end)
-            |> Enum.map(fn {time, task} -> {time, get_in(task, ["action", "message", "text"])} end)
-            |> Enum.filter(fn {_, msg} -> not is_nil(msg) end)
-            |> Enum.map(fn {time, msg} ->
-              time_str = delta_to_string(time, now)
-              "In #{time_str}, #{msg}"
-            end)
-            |> Enum.take(5)
-            |> Enum.join(" ")
+            steps
+            |> parse_steps()
+            |> filter_steps(&filter_todo_task?/1)
+            |> Enum.take(3)
+            |> steps_to_message(now)
+
+          IO.inspect(messages)
 
           %{
-            fulfillmentText: messages
+            fulfillmentText: messages || "There are no tasks"
           }
 
         "projects/robotica-3746c/agent/intents/8059af23-6a9f-46a4-ab7f-7ea713a86d79" ->
           parameters = Map.get(query, "parameters", %{})
           query = parameters["query"]
           {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
-          esteps = expand_schedule(steps)
           now = Calendar.DateTime.now_utc()
-          midnight = RoboticaFace.Date.tomorrow(now) |> RoboticaFace.Date.midnight_utc()
 
-          messages =
-            esteps
-            |> Enum.filter(fn {time, _} -> Calendar.DateTime.before?(time, midnight) end)
-            |> Enum.map(fn {time, task} -> {time, get_in(task, ["action", "message", "text"])} end)
-            |> Enum.filter(fn {_, msg} -> not is_nil(msg) end)
-            |> Enum.filter(fn {_, msg} ->
-              Enum.all?(String.split(query), fn word -> msg =~ word end)
-            end)
-            |> Enum.map(fn {time, msg} ->
-              time_str = delta_to_string(time, now)
-              "In #{time_str}, #{msg}"
+          midnight =
+            RoboticaFace.Date.tomorrow(now)
+            |> RoboticaFace.Date.midnight_utc()
+
+          steps =
+            steps
+            |> parse_steps()
+            |> filter_steps_before_time(midnight)
+            |> filter_steps(fn task -> filter_query_task?(task, query)
             end)
 
-          joined_messages = Enum.join(messages, " ")
+          message = steps_to_message(steps, now)
+          count = count_tasks(steps)
 
           %{
-            fulfillmentText: "There were #{length(messages)} results. #{joined_messages}"
+            fulfillmentText: "There were #{count} tasks. #{message}"
           }
 
         _ ->

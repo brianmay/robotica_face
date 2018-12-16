@@ -61,10 +61,18 @@ defmodule RoboticaFaceWeb.ApiController do
   defp filter_query_task?(task, query) do
     msg = get_in(task, ["action", "message", "text"])
 
+    query = String.downcase(query)
+    msg = case msg do
+      nil -> nil
+      msg -> String.downcase(msg)
+    end
+
     Enum.all?(String.split(query), fn word ->
       case msg do
         nil -> false
-        msg -> msg =~ word
+        msg ->
+          regexp =  ~r"\b#{Regex.escape(word)}\b"
+          not is_nil(Regex.run(regexp, msg))
       end
     end)
   end
@@ -77,10 +85,9 @@ defmodule RoboticaFaceWeb.ApiController do
 
     cond do
       not is_nil(text) -> text
-      lights=="flash" -> "#{locations} Lights flash."
+      lights == "flash" -> "#{locations} Lights flash."
       music_stop -> "#{locations} Music stop."
     end
-
   end
 
   defp steps_to_message(steps, now) do
@@ -113,11 +120,53 @@ defmodule RoboticaFaceWeb.ApiController do
     end
   end
 
+  def each_task(steps, process) do
+    Enum.each(steps, fn step ->
+      Enum.each(step["tasks"], fn task ->
+        process.(step["required_time"], task)
+      end)
+    end)
+  end
+
+  def reduce_task(steps, initial, process) do
+    Enum.reduce(steps, initial, fn step, acc ->
+      Enum.reduce(step["tasks"], acc, fn task, task_acc ->
+        process.(step["required_time"], task, task_acc)
+      end)
+    end)
+  end
+
+  def get_context(params, context_name) do
+    session = Map.get(params, "session", "")
+    contexts = get_in(params, ["queryResult", "outputContexts"])
+    full_context_name = "#{session}/contexts/#{context_name}"
+
+    results = Enum.filter(contexts, fn context -> context["name"] == full_context_name end)
+
+    case results do
+      [head | _] -> head
+      [] -> nil
+    end
+  end
+
+  def get_filtered_steps(params, now) do
+    context = get_context(params, "task_filter")
+    query = get_in(context, ["parameters", "query"])
+    {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-nerves-c775")
+
+    midnight =
+      RoboticaFace.Date.tomorrow(now)
+      |> RoboticaFace.Date.midnight_utc()
+
+    steps
+    |> parse_steps()
+    |> filter_steps_before_time(midnight)
+    |> filter_steps(fn task -> filter_query_task?(task, query) end)
+  end
+
   def index(conn, params) do
     IO.inspect(params)
-    query = Map.get(params, "queryResult", %{})
-    parameters = Map.get(query, "parameters", %{})
-    intent = get_in(query, ["intent", "name"])
+
     token = get_in(params, ["originalDetectIntentRequest", "payload", "user", "idToken"])
 
     result =
@@ -147,43 +196,21 @@ defmodule RoboticaFaceWeb.ApiController do
           }
 
         true ->
-          process_intent(intent, parameters)
+          process_intent(params)
       end
 
+    IO.inspect(assigns)
     render(conn, "index.json", assigns)
   end
 
-  defp process_intent(intent, parameters) do
+  defp process_intent(params) do
+    query = Map.get(params, "queryResult", %{})
+    intent = get_in(query, ["intent", "name"])
+    parameters = Map.get(query, "parameters", %{})
+
     case intent do
-      "projects/robotica-3746c/agent/intents/97e7f7df-4e1a-4bbe-8308-7e9a86789c69" ->
-        cond do
-          parameters["lunch"] not in ["Yes", ""] ->
-            %{
-              fulfillmentText: "I am so sorry. The Kids must make lunch before turning on the TV."
-            }
-
-          parameters["teeth"] not in ["Yes", ""] ->
-            %{
-              fulfillmentText:
-                "I am so sorry. The Kids must clean teeth before turning on the TV."
-            }
-
-          parameters["bed"] not in ["No", ""] ->
-            %{
-              fulfillmentText:
-                "I am so sorry. The Kids will wake up the dog who will watch TV all night if you turn it on now."
-            }
-
-          true ->
-            RoboticaFace.Sonoff.turn_on()
-
-            %{
-              fulfillmentText: "Turning TV on."
-            }
-        end
-
       "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
-        {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
+        {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-nerves-c775")
         now = Calendar.DateTime.now_utc()
 
         messages =
@@ -198,25 +225,34 @@ defmodule RoboticaFaceWeb.ApiController do
         }
 
       "projects/robotica-3746c/agent/intents/8059af23-6a9f-46a4-ab7f-7ea713a86d79" ->
-        query = parameters["query"]
-        {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule, "robotica-silverfish")
         now = Calendar.DateTime.now_utc()
-
-        midnight =
-          RoboticaFace.Date.tomorrow(now)
-          |> RoboticaFace.Date.midnight_utc()
-
-        steps =
-          steps
-          |> parse_steps()
-          |> filter_steps_before_time(midnight)
-          |> filter_steps(fn task -> filter_query_task?(task, query) end)
-
+        steps = get_filtered_steps(params, now)
         message = steps_to_message(steps, now)
         count = count_tasks(steps)
 
         %{
           fulfillmentText: "There were #{count} tasks. #{message}"
+        }
+
+      "projects/robotica-3746c/agent/intents/472a3b36-0901-4da9-9afa-09156f718f46" ->
+        now = Calendar.DateTime.now_utc()
+        steps = get_filtered_steps(params, now)
+        count = count_tasks(steps)
+        status = parameters["TaskStatus"]
+        IO.inspect(status)
+
+        count =
+          reduce_task(steps, 0, fn time, task, acc ->
+            result = RoboticaFace.Mqtt.mark_task(task, status)
+
+            case result do
+              :error -> acc
+              :ok -> acc + 1
+            end
+          end)
+
+        %{
+          fulfillmentText: "There were #{count} tasks that were marked as #{status}."
         }
 
       _ ->

@@ -20,11 +20,11 @@ defmodule RoboticaFaceWeb.ScheduleController do
     render(conn, "host_list.html", host_list: host_list)
   end
 
-  defp get_task_frequency(hostname, task_id) do
+  defp get_task(hostname, task_id) do
     steps = RoboticaFace.Schedule.get_tasks_by_id(:schedule, hostname, task_id)
 
     case steps do
-      {:ok, [head | _]} -> hd(head["tasks"])["frequency"]
+      {:ok, [head | _]} -> hd(head["tasks"])
       {:ok, _} -> nil
       :error -> :error
     end
@@ -34,50 +34,32 @@ defmodule RoboticaFaceWeb.ScheduleController do
     id = params["task_id"]
     hostname = params["hostname"]
     status = params["status"]
+    task = get_task(hostname, id)
 
-    frequency = get_task_frequency(hostname, id)
-
-    case frequency do
-      :error ->
+    case task do
+      nil ->
         conn
         |> put_view(RoboticaFaceWeb.ErrorView)
         |> render("404.html")
 
       _ ->
-        do_mark(conn, id, hostname, frequency, status)
+        do_mark(conn, id, hostname, task, status)
     end
   end
 
-  defp do_mark(conn, id, hostname, frequency, status) do
-    now = Calendar.DateTime.now_utc()
-    midnight = RoboticaFace.Date.tomorrow(now) |> RoboticaFace.Date.midnight_utc()
-    monday_midnight = RoboticaFace.Date.next_monday(now) |> RoboticaFace.Date.midnight_utc()
+  defp do_mark(conn, id, hostname, task, status) do
+    result = RoboticaFace.Mqtt.mark_task(task, status)
 
-    {expires_time, status} =
-      case status do
-        "done" ->
-          case frequency do
-            "weekly" -> {monday_midnight, "done"}
-            _ -> {midnight, "done"}
-          end
+    case result do
+      :ok ->
+        conn
+        |> put_flash(:info, "Mark published.")
+        |> redirect(to: Routes.schedule_path(conn, :upcoming_list, hostname))
 
-        "postpone" ->
-          {midnight, "cancelled"}
-
-        _ ->
-          {nil, nil}
-      end
-
-    if not is_nil(expires_time) do
-      RoboticaFace.Mqtt.publish_mark(id, status, expires_time)
-
-      conn
-      |> put_flash(:info, "Mark published.")
-      |> redirect(to: Routes.schedule_path(conn, :upcoming_list, hostname))
-    else
-      conn
-      |> put_flash(:info, "Mark NOT published.")
-      |> redirect(to: Routes.schedule_path(conn, :upcoming_list, hostname))
+      :error ->
+        conn
+        |> put_flash(:info, "Mark NOT published.")
+        |> redirect(to: Routes.schedule_path(conn, :upcoming_list, hostname))
     end
   end
 end

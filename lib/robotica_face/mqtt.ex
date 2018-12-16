@@ -28,4 +28,36 @@ defmodule RoboticaFace.Mqtt do
 
     publish(topic, action)
   end
+
+  def mark_task(task, status) do
+    id = task["id"]
+    frequency = task["frequency"]
+    now = Calendar.DateTime.now_utc()
+    midnight = RoboticaFace.Date.tomorrow(now) |> RoboticaFace.Date.midnight_utc()
+    monday_midnight = RoboticaFace.Date.next_monday(now) |> RoboticaFace.Date.midnight_utc()
+
+    {expires_time, status} =
+      case status do
+        "done" ->
+          case frequency do
+            "weekly" -> {monday_midnight, "done"}
+            _ -> {midnight, "done"}
+          end
+
+        "postponed" ->
+          {midnight, "cancelled"}
+
+        _ ->
+          {nil, nil}
+      end
+
+    case expires_time do
+      nil ->
+        :error
+
+      _ ->
+        RoboticaFace.Mqtt.publish_mark(id, status, expires_time)
+        :ok
+    end
+  end
 end

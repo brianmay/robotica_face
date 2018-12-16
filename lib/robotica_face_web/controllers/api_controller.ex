@@ -172,7 +172,7 @@ defmodule RoboticaFaceWeb.ApiController do
     result =
       case token do
         nil -> {:error, "No token"}
-        _ -> Joken.verify(token, Joken.Signer.parse_config(:rs256))
+        _ -> Token.verify_and_validate(token)
       end
 
     known_user =

@@ -1,6 +1,8 @@
 defmodule Token do
   use Joken.Config
 
+  add_hook(JokenJwks, jwks_url: "https://www.googleapis.com/oauth2/v3/certs")
+
   @impl true
   def token_config do
     default_claims(

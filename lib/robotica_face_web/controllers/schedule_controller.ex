@@ -43,11 +43,11 @@ defmodule RoboticaFaceWeb.ScheduleController do
         |> render("404.html")
 
       _ ->
-        do_mark(conn, id, hostname, task, status)
+        do_mark(conn, hostname, task, status)
     end
   end
 
-  defp do_mark(conn, id, hostname, task, status) do
+  defp do_mark(conn, hostname, task, status) do
     result = RoboticaFace.Mqtt.mark_task(task, status)
 
     case result do

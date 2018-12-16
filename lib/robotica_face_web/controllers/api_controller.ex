@@ -237,12 +237,11 @@ defmodule RoboticaFaceWeb.ApiController do
       "projects/robotica-3746c/agent/intents/472a3b36-0901-4da9-9afa-09156f718f46" ->
         now = Calendar.DateTime.now_utc()
         steps = get_filtered_steps(params, now)
-        count = count_tasks(steps)
+        total_count = count_tasks(steps)
         status = parameters["TaskStatus"]
-        IO.inspect(status)
 
         count =
-          reduce_task(steps, 0, fn time, task, acc ->
+          reduce_task(steps, 0, fn _time, task, acc ->
             result = RoboticaFace.Mqtt.mark_task(task, status)
 
             case result do
@@ -252,7 +251,7 @@ defmodule RoboticaFaceWeb.ApiController do
           end)
 
         %{
-          fulfillmentText: "There were #{count} tasks that were marked as #{status}."
+          fulfillmentText: "There were #{count} out of #{total_count} tasks that were marked as #{status}."
         }
 
       _ ->

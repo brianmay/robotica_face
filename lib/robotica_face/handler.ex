@@ -20,6 +20,11 @@ defmodule RoboticaFace.Handler do
     {:ok, state}
   end
 
+  def connection(:terminated, state) do
+    Logger.info("MQTT terminated")
+    {:ok, state}
+  end
+
   def handle_message(["stat", "sonoff", "POWER"], "ON", state) do
     Logger.info("sonoff ON")
     {:ok, state}

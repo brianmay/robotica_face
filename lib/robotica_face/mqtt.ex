@@ -1,4 +1,6 @@
 defmodule RoboticaFace.Mqtt do
+  alias RoboticaFace.Date
+
   @spec publish(String.t(), list() | map()) :: :ok | {:error, String.t()}
   defp publish(topic, data) do
     client_id = RoboticaFace.Application.get_tortoise_client_id()
@@ -33,8 +35,8 @@ defmodule RoboticaFace.Mqtt do
     id = task["id"]
     frequency = task["frequency"]
     now = Calendar.DateTime.now_utc()
-    midnight = RoboticaFace.Date.tomorrow(now) |> RoboticaFace.Date.midnight_utc()
-    monday_midnight = RoboticaFace.Date.next_monday(now) |> RoboticaFace.Date.midnight_utc()
+    midnight = Date.tomorrow(now) |> Date.midnight_utc()
+    monday_midnight = Date.next_monday(now) |> Date.midnight_utc()
 
     {expires_time, status} =
       case status do
@@ -56,7 +58,7 @@ defmodule RoboticaFace.Mqtt do
         :error
 
       _ ->
-        RoboticaFace.Mqtt.publish_mark(id, status, expires_time)
+        publish_mark(id, status, expires_time)
         :ok
     end
   end

@@ -10,8 +10,7 @@ defmodule RoboticaFace.Auth.Guardian do
     {:ok, sub}
   end
 
-  def resource_from_claims(claims) do
-    id = claims["sub"]
+  def resource_from_claims(%{"sub" => id}) do
     user = Accounts.get_user!(id)
     {:ok, user}
   end

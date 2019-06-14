@@ -8,14 +8,28 @@
 use Mix.Config
 
 config :robotica_face,
-  ecto_repos: [RoboticaFace.Repo]
+  ecto_repos: [RoboticaFace.Repo],
+  api_username: System.get_env("GOOGLE_USERNAME"),
+  api_password: System.get_env("GOOGLE_PASSWORD"),
+  mqtt_host: System.get_env("MQTT_HOST"),
+  mqtt_port: String.to_integer(System.get_env("MQTT_PORT") || "8883"),
+  ca_cert_file: System.get_env("CA_CERT_FILE"),
+  mqtt_user_name: System.get_env("MQTT_USER_NAME"),
+  mqtt_password: System.get_env("MQTT_PASSWORD")
+
+config :robotica_face, RoboticaFace.Repo, url: System.get_env("DATABASE_URL")
 
 # Configures the endpoint
 config :robotica_face, RoboticaFaceWeb.Endpoint,
+  http: [port: 4000, ip: {0, 0, 0, 0, 0, 0, 0, 0}],
   url: [host: "localhost"],
-  secret_key_base: "c7D1XBwlgd9KYS/HKKqH4el7ofNFtOCv8rtvwy7Zc8IQ0Ubq22/Bgnb16D8n/wPL",
+  secret_key_base: System.get_env("SECRET_KEY_BASE"),
   render_errors: [view: RoboticaFaceWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: RoboticaFace.PubSub, adapter: Phoenix.PubSub.PG2]
+
+config :robotica_face, RoboticaFace.Auth.Guardian,
+  issuer: "robotica_face",
+  secret_key: System.get_env("GUARDIAN_SECRET")
 
 config :robotica_face, RoboticaFaceWeb.Auth.AuthAccessPipeline,
   module: RoboticaFace.Auth.Guardian,
@@ -28,9 +42,6 @@ config :logger, :console,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
-
-# Import secrets.
-import_config "secrets.exs"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

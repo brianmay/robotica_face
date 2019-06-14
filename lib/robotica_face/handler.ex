@@ -38,7 +38,7 @@ defmodule RoboticaFace.Handler do
   def handle_message(["schedule", hostname], schedule, state) do
     Logger.info("Got updated schedule")
 
-    case Poison.decode(schedule) do
+    case Jason.decode(schedule) do
       {:ok, schedule} -> RoboticaFace.Schedule.set_schedule(:schedule, hostname, schedule)
       {:error, _} -> Logger.info("Invalid schedule received from #{hostname}.")
     end

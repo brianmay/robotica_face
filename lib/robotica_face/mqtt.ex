@@ -5,7 +5,7 @@ defmodule RoboticaFace.Mqtt do
   defp publish(topic, data) do
     client_id = RoboticaFace.Application.get_tortoise_client_id()
 
-    with {:ok, data} <- Poison.encode(data),
+    with {:ok, data} <- Jason.encode(data),
          :ok <- Tortoise.publish(client_id, topic, data, qos: 0) do
       :ok
     else

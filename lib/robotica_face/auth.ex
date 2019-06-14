@@ -1,25 +1,24 @@
 defmodule RoboticaFace.Auth do
-  require Ecto.Query
-
-  alias Comeonin.Bcrypt
+  import Ecto.Query
 
   alias RoboticaFace.Accounts.User
   alias RoboticaFace.Auth.Guardian
   alias RoboticaFace.Repo
 
-  def authenticate_user(email, given_password) do
-    query = Ecto.Query.from(u in User, where: u.email == ^email)
+  def authenticate_user(email, plain_text_password) do
+    query = from u in User, where: u.email == ^email
 
-    Repo.one(query)
-    |> check_password(given_password)
-  end
+    case Repo.one(query) do
+      nil ->
+        Bcrypt.no_user_verify()
+        {:error, "Incorrect username or password"}
 
-  defp check_password(nil, _), do: {:error, "Incorrect username or password"}
-
-  defp check_password(user, given_password) do
-    case Bcrypt.checkpw(given_password, user.password_hash) do
-      true -> {:ok, user}
-      false -> {:error, "Incorrect username or password"}
+      user ->
+        if Bcrypt.verify_pass(plain_text_password, user.password_hash) do
+          {:ok, user}
+        else
+          {:error, "Incorrect username or password"}
+        end
     end
   end
 

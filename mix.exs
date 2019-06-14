@@ -46,11 +46,11 @@ defmodule RoboticaFace.MixProject do
       {:joken, "== 2.0.0-rc2"},
       {:joken_jwks, git: "https://github.com/joken-elixir/joken_jwks.git"},
       {:tortoise, "~> 0.9.2"},
-      {:guardian, "~> 1.0"},
-      {:comeonin, "~> 4.0"},
-      {:bcrypt_elixir, "~> 1.0"},
+      {:guardian, "~> 1.2"},
+      {:bcrypt_elixir, "~> 2.0"},
       {:calendar, "~> 0.17.2"},
-      {:timex, "~> 3.1"}
+      {:timex, "~> 3.1"},
+      {:distillery, "~> 2.0"}
     ]
   end
 

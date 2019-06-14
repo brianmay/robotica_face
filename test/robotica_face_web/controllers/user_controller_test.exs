@@ -2,6 +2,7 @@ defmodule RoboticaFaceWeb.UserControllerTest do
   use RoboticaFaceWeb.ConnCase
 
   alias RoboticaFace.Accounts
+  alias RoboticaFace.Auth.Guardian
 
   @create_attrs %{email: "some email", name: "some name", password: "some password"}
   @update_attrs %{
@@ -11,6 +12,19 @@ defmodule RoboticaFaceWeb.UserControllerTest do
   }
   @invalid_attrs %{email: nil, name: nil, password: nil}
 
+  def fixture(:token) do
+    {:ok, user} =
+      Accounts.create_user(%{
+        email: "some evil email",
+        name: "some name",
+        password: "some password",
+        is_admin: true
+      })
+
+    {:ok, token, _} = Guardian.encode_and_sign(user, %{}, token_type: :access)
+    token
+  end
+
   def fixture(:user) do
     {:ok, user} = Accounts.create_user(@create_attrs)
     user
@@ -18,6 +32,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
 
   describe "index" do
     test "lists all users", %{conn: conn} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = get(conn, Routes.user_path(conn, :index))
       assert html_response(conn, 200) =~ "Listing Users"
     end
@@ -25,6 +41,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
 
   describe "new user" do
     test "renders form", %{conn: conn} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = get(conn, Routes.user_path(conn, :new))
       assert html_response(conn, 200) =~ "New User"
     end
@@ -32,6 +50,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
 
   describe "create user" do
     test "redirects to show when data is valid", %{conn: conn} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = post(conn, Routes.user_path(conn, :create), user: @create_attrs)
 
       assert %{id: id} = redirected_params(conn)
@@ -42,6 +62,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = post(conn, Routes.user_path(conn, :create), user: @invalid_attrs)
       assert html_response(conn, 200) =~ "New User"
     end
@@ -51,6 +73,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
     setup [:create_user]
 
     test "renders form for editing chosen user", %{conn: conn, user: user} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = get(conn, Routes.user_path(conn, :edit, user))
       assert html_response(conn, 200) =~ "Edit User"
     end
@@ -60,6 +84,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
     setup [:create_user]
 
     test "redirects when data is valid", %{conn: conn, user: user} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = put(conn, Routes.user_path(conn, :update, user), user: @update_attrs)
       assert redirected_to(conn) == Routes.user_path(conn, :show, user)
 
@@ -68,6 +94,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
     end
 
     test "renders errors when data is invalid", %{conn: conn, user: user} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = put(conn, Routes.user_path(conn, :update, user), user: @invalid_attrs)
       assert html_response(conn, 200) =~ "Edit User"
     end
@@ -77,6 +105,8 @@ defmodule RoboticaFaceWeb.UserControllerTest do
     setup [:create_user]
 
     test "deletes chosen user", %{conn: conn, user: user} do
+      token = fixture(:token)
+      conn = put_req_header(conn, "authorization", "bearer: " <> token)
       conn = delete(conn, Routes.user_path(conn, :delete, user))
       assert redirected_to(conn) == Routes.user_path(conn, :index)
 

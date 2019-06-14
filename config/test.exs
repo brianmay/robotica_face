@@ -9,10 +9,6 @@ config :robotica_face, RoboticaFaceWeb.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warn
 
-# Configure your database
 config :robotica_face, RoboticaFace.Repo,
-  username: "postgres",
-  password: "postgres",
-  database: "robotica_face_test",
-  hostname: "localhost",
-  pool: Ecto.Adapters.SQL.Sandbox
+  pool: Ecto.Adapters.SQL.Sandbox,
+  url: System.get_env("DATABASE_URL_TEST")

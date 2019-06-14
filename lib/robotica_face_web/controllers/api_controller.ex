@@ -62,16 +62,20 @@ defmodule RoboticaFaceWeb.ApiController do
     msg = get_in(task, ["action", "message", "text"])
 
     query = String.downcase(query)
-    msg = case msg do
-      nil -> nil
-      msg -> String.downcase(msg)
-    end
+
+    msg =
+      case msg do
+        nil -> nil
+        msg -> String.downcase(msg)
+      end
 
     Enum.all?(String.split(query), fn word ->
       case msg do
-        nil -> false
+        nil ->
+          false
+
         msg ->
-          regexp =  ~r"\b#{Regex.escape(word)}\b"
+          regexp = ~r"\b#{Regex.escape(word)}\b"
           not is_nil(Regex.run(regexp, msg))
       end
     end)
@@ -251,7 +255,8 @@ defmodule RoboticaFaceWeb.ApiController do
           end)
 
         %{
-          fulfillmentText: "There were #{count} out of #{total_count} tasks that were marked as #{status}."
+          fulfillmentText:
+            "There were #{count} out of #{total_count} tasks that were marked as #{status}."
         }
 
       _ ->

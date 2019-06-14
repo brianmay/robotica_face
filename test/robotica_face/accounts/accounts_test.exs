@@ -37,7 +37,7 @@ defmodule RoboticaFace.AccountsTest do
       assert {:ok, %User{} = user} = Accounts.create_user(@valid_attrs)
       assert user.email == "some email"
       assert user.name == "some name"
-      assert user.password == "some password"
+      {:ok, _} = Bcrypt.check_pass(user, "some password")
     end
 
     test "create_user/1 with invalid data returns error changeset" do
@@ -49,7 +49,7 @@ defmodule RoboticaFace.AccountsTest do
       assert {:ok, %User{} = user} = Accounts.update_user(user, @update_attrs)
       assert user.email == "some updated email"
       assert user.name == "some updated name"
-      assert user.password == "some updated password"
+      {:ok, _} = Bcrypt.check_pass(user, "some updated password")
     end
 
     test "update_user/2 with invalid data returns error changeset" do

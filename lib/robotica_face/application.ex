@@ -5,6 +5,12 @@ defmodule RoboticaFace.Application do
 
   use Application
 
+  @mqtt_host Application.get_env(:robotica_face, :mqtt_host)
+  @mqtt_port Application.get_env(:robotica_face, :mqtt_port)
+  @ca_cert_file Application.get_env(:robotica_face, :ca_cert_file)
+  @user_name Application.get_env(:robotica_face, :mqtt_user_name)
+  @password Application.get_env(:robotica_face, :mqtt_password)
+
   def get_tortoise_client_id do
     {:ok, hostname} = :inet.gethostname()
     hostname = to_string(hostname)
@@ -21,7 +27,12 @@ defmodule RoboticaFace.Application do
       {Tortoise.Connection,
        client_id: get_tortoise_client_id(),
        handler: {RoboticaFace.Handler, []},
-       server: {Tortoise.Transport.Tcp, host: "localhost", port: 1883},
+       user_name: @user_name,
+       password: @password,
+       server: {
+         Tortoise.Transport.SSL,
+         host: @mqtt_host, port: @mqtt_port, cacertfile: @ca_cert_file
+       },
        subscriptions: [
          {"stat/sonoff/POWER", 0},
          {"schedule/#", 0}

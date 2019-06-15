@@ -1,6 +1,8 @@
 defmodule RoboticaFaceWeb.ApiController do
   use RoboticaFaceWeb, :controller
 
+  alias RoboticaFaceWeb.Token
+
   defp delta_to_string(scheduled, now) do
     {:ok, seconds, _microseconds, _} = Calendar.DateTime.diff(scheduled, now)
 

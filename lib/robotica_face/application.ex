@@ -24,6 +24,7 @@ defmodule RoboticaFace.Application do
       RoboticaFace.Repo,
       # Start the endpoint when the application starts
       RoboticaFaceWeb.Endpoint,
+      RoboticaFaceWeb.Strategy,
       {Tortoise.Connection,
        client_id: get_tortoise_client_id(),
        handler: {RoboticaFace.Handler, []},

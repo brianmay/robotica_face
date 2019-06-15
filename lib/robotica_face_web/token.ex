@@ -1,7 +1,7 @@
-defmodule Token do
+defmodule RoboticaFaceWeb.Token do
   use Joken.Config
 
-  add_hook(JokenJwks, jwks_url: "https://www.googleapis.com/oauth2/v3/certs")
+  add_hook(JokenJwks, strategy: RoboticaFaceWeb.Strategy)
 
   @impl true
   def token_config do

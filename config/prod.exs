@@ -13,7 +13,7 @@ config :robotica_face, RoboticaFaceWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json",
   server: true,
   root: ".",
-  version: Application.spec(:phone_db, :vsn)
+  version: Application.spec(:robotica_face, :vsn)
 
 # Do not print debug messages in production
 config :logger, level: :info

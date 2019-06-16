@@ -43,6 +43,10 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+if System.get_env("IPV6") != nil do
+  config :robotica_face, RoboticaFace.Repo, socket_options: [:inet6]
+end
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

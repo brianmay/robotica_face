@@ -46,7 +46,6 @@ jobs:
       - run:
           name: Run tests
           command: |
-            export LDAP_SERVER="localhost"
             mix test
 
       - store_test_results:

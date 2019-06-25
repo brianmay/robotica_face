@@ -46,6 +46,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            export GUARDIAN_SECRET="Pbs+1dq8+DH3QMqKX5KgtTVoPgYp+5AQQ8mY56ThEe4fbVblZkWah4gW2NiCTP84"
             mix test
 
       - store_test_results:

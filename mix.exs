@@ -46,7 +46,7 @@ defmodule RoboticaFace.MixProject do
       {:joken, "~> 2.1.0"},
       {:joken_jwks, "~> 1.0"},
       {:tortoise, "~> 0.9.2"},
-      {:guardian, "~> 1.2"},
+      {:guardian, "~> 2.0"},
       {:bcrypt_elixir, "~> 2.0"},
       {:calendar, "~> 1.0.0"},
       {:timex, "~> 3.5"},

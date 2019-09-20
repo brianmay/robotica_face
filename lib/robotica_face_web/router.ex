@@ -47,9 +47,7 @@ defmodule RoboticaFaceWeb.Router do
     pipe_through :ensure_auth
     pipe_through :admin_required
 
-    get "/schedule", ScheduleController, :host_list
-
-    scope "/schedule/:hostname" do
+    scope "/schedule" do
       get "/", ScheduleController, :upcoming_list
       post "/mark/:task_id/:status", ScheduleController, :mark
     end

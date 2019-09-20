@@ -1,39 +1,28 @@
-defmodule RoboticaFace.Mqtt do
+defmodule RoboticaFace.Mark do
   alias RoboticaFace.Date
-
-  @spec publish(String.t(), list() | map()) :: :ok | {:error, String.t()}
-  defp publish(topic, data) do
-    client_id = RoboticaFace.Application.get_tortoise_client_id()
-
-    with {:ok, data} <- Jason.encode(data),
-         :ok <- Tortoise.publish(client_id, topic, data, qos: 0) do
-      :ok
-    else
-      {:error, msg} -> {:error, "Tortoise.publish got error '#{msg}'"}
-    end
-  end
+  use EventBus.EventSource
 
   @spec publish_mark(String.t(), String.t(), DateTime) :: :ok | {:error, String.t()}
   def publish_mark(id, status, expires_time) do
-    topic = "mark"
-
     expires =
       expires_time
       |> Calendar.DateTime.shift_zone!("UTC")
       |> Calendar.DateTime.Format.iso8601()
 
-    action = %{
-      id: id,
-      status: status,
-      expires_time: expires
-    }
+    event_params = %{topic: :mark}
 
-    publish(topic, action)
+    EventSource.notify event_params do
+      %RoboticaPlugins.Mark{
+        id: id,
+        status: status,
+        expires_time: expires
+      }
+    end
   end
 
   def mark_task(task, status) do
-    id = task["id"]
-    frequency = task["frequency"]
+    id = task.id
+    frequency = task.frequency
     now = Calendar.DateTime.now_utc()
     midnight = Date.tomorrow(now) |> Date.midnight_utc()
     monday_midnight = Date.next_monday(now) |> Date.midnight_utc()

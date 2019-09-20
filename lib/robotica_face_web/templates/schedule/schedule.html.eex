@@ -10,16 +10,16 @@
   </thead>
   <tbody>
     <%= for step <- @schedule do %>
-      <%= for task <- step["tasks"] do %>
+      <%= for task <- step.tasks do %>
         <tr>
-          <td><%= date_time_to_local(step["required_time"]) %></td>
-          <td><%= Enum.join(task["locations"], ", ") %></td>
-          <td><%= task["action"]["message"]["text"] %></td>
-          <td><%= task["mark"] %></td>
+          <td><%= date_time_to_local(step.required_time) %></td>
+          <td><%= Enum.join(task.locations, ", ") %></td>
+          <td><%= get_action_message(task.action) %></td>
+          <td><%= task.mark %></td>
           <td>
-            <%= link "Done", to: Routes.schedule_path(@conn, :mark, @hostname, task["id"], "done"), method: :post%>,
-            <%= link "Postpone", to: Routes.schedule_path(@conn, :mark, @hostname, task["id"], "postponed"), method: :post%>,
-            <%= link "Clear", to: Routes.schedule_path(@conn, :mark, @hostname, task["id"], "clear"), method: :post%>
+            <%= link "Done", to: Routes.schedule_path(@conn, :mark, task.id, "done"), method: :post%>,
+            <%= link "Postpone", to: Routes.schedule_path(@conn, :mark, task.id, "postponed"), method: :post%>,
+            <%= link "Clear", to: Routes.schedule_path(@conn, :mark, task.id, "clear"), method: :post%>
           </td>
         </tr>
       <% end %>

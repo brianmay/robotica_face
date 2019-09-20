@@ -45,12 +45,12 @@ defmodule RoboticaFace.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:joken, "~> 2.1.0"},
       {:joken_jwks, "~> 1.0"},
-      {:tortoise, "~> 0.9.2"},
       {:guardian, "~> 1.2"},
       {:bcrypt_elixir, "~> 2.0"},
       {:calendar, "~> 1.0.0"},
       {:timex, "~> 3.5"},
-      {:distillery, "~> 2.0"}
+      {:event_bus, "~> 1.6.0"},
+      {:robotica_plugins, path: "../robotica_plugins", optional: true}
     ]
   end
 

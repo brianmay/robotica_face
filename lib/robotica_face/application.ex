@@ -5,19 +5,7 @@ defmodule RoboticaFace.Application do
 
   use Application
 
-  def get_tortoise_client_id do
-    {:ok, hostname} = :inet.gethostname()
-    hostname = to_string(hostname)
-    "robotica_face-#{hostname}"
-  end
-
   def start(_type, _args) do
-    mqtt_host = Application.get_env(:robotica_face, :mqtt_host)
-    mqtt_port = Application.get_env(:robotica_face, :mqtt_port)
-    ca_cert_file = Application.get_env(:robotica_face, :ca_cert_file)
-    user_name = Application.get_env(:robotica_face, :mqtt_user_name)
-    password = Application.get_env(:robotica_face, :mqtt_password)
-
     # List all child processes to be supervised
     children = [
       # Start the Ecto repository
@@ -25,21 +13,10 @@ defmodule RoboticaFace.Application do
       # Start the endpoint when the application starts
       RoboticaFaceWeb.Endpoint,
       RoboticaFaceWeb.Strategy,
-      {Tortoise.Connection,
-       client_id: get_tortoise_client_id(),
-       handler: {RoboticaFace.Handler, []},
-       user_name: user_name,
-       password: password,
-       server: {
-         Tortoise.Transport.SSL,
-         host: mqtt_host, port: mqtt_port, cacertfile: ca_cert_file,
-       },
-       subscriptions: [
-         {"stat/sonoff/POWER", 0},
-         {"schedule/#", 0}
-       ]},
       {RoboticaFace.Schedule, name: :schedule}
     ]
+
+    EventBus.subscribe({RoboticaFace.RoboticaService, ["^schedule"]})
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

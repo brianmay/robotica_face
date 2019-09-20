@@ -1,8 +1,0 @@
-<p>Get schedule for:</p>
-<ul>
-    <%= for hostname <- @host_list do %>
-        <li>
-            <%= link hostname, to: Routes.schedule_path(@conn, :upcoming_list, hostname), method: :get%>
-        </li>
-    <% end %>
-</ul>

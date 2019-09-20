@@ -1,15 +1,16 @@
 defmodule RoboticaFaceWeb.ScheduleView do
   use RoboticaFaceWeb, :view
 
-  def date_time_to_local(str) do
-    case Timex.parse(str, "{ISO:Extended}") do
-      {:ok, dt} ->
-        dt
-        |> Calendar.DateTime.shift_zone!("Australia/Melbourne")
-        |> Timex.format!("%F %T", :strftime)
+  def date_time_to_local(dt) do
+    dt
+    |> Calendar.DateTime.shift_zone!("Australia/Melbourne")
+    |> Timex.format!("%F %T", :strftime)
+  end
 
-      {:error, _} ->
-        "Invalid dt"
+  def get_action_message(action) do
+    case action.message do
+      nil -> nil
+      message -> message.text
     end
   end
 end

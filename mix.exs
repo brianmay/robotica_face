@@ -35,8 +35,6 @@ defmodule RoboticaFace.MixProject do
     [
       {:phoenix, "~> 1.4.0"},
       {:phoenix_pubsub, "~> 1.1"},
-      {:phoenix_ecto, "~> 4.0"},
-      {:ecto_sql, "~> 3.0"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 2.11"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
@@ -45,8 +43,6 @@ defmodule RoboticaFace.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:joken, "~> 2.1.0"},
       {:joken_jwks, "~> 1.0"},
-      {:guardian, "~> 1.2"},
-      {:bcrypt_elixir, "~> 2.0"},
       {:calendar, "~> 1.0.0"},
       {:timex, "~> 3.5"},
       {:event_bus, "~> 1.6.0"},
@@ -62,9 +58,7 @@ defmodule RoboticaFace.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate", "test --no-start"]
+      test: ["test --no-start"]
     ]
   end
 end

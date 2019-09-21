@@ -1,8 +1,6 @@
 defmodule RoboticaFaceWeb.Router do
   use RoboticaFaceWeb, :router
 
-  alias RoboticaFaceWeb.Auth
-
   @api_username Application.get_env(:robotica_face, :api_username)
   @api_password Application.get_env(:robotica_face, :api_password)
 
@@ -15,15 +13,11 @@ defmodule RoboticaFaceWeb.Router do
   end
 
   pipeline :auth do
-    plug(Auth.AuthAccessPipeline)
+    plug RoboticaFace.Auth.CheckLoginToken
   end
 
   pipeline :ensure_auth do
-    plug Guardian.Plug.EnsureAuthenticated
-  end
-
-  pipeline :admin_required do
-    plug Auth.CheckAdmin
+    plug RoboticaFace.Auth.EnsureAuth
   end
 
   pipeline :api do
@@ -45,14 +39,11 @@ defmodule RoboticaFaceWeb.Router do
     pipe_through :browser
     pipe_through :auth
     pipe_through :ensure_auth
-    pipe_through :admin_required
 
     scope "/schedule" do
       get "/", ScheduleController, :upcoming_list
       post "/mark/:task_id/:status", ScheduleController, :mark
     end
-
-    resources "/users", UserController
   end
 
   scope "/api", RoboticaFaceWeb do

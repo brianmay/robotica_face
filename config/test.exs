@@ -8,7 +8,3 @@ config :robotica_face, RoboticaFaceWeb.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
-
-config :robotica_face, RoboticaFace.Repo,
-  pool: Ecto.Adapters.SQL.Sandbox,
-  url: System.get_env("DATABASE_URL_TEST")

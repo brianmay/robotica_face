@@ -8,7 +8,6 @@
 use Mix.Config
 
 config :robotica_face,
-  ecto_repos: [RoboticaFace.Repo],
   api_username: System.get_env("GOOGLE_USERNAME"),
   api_password: System.get_env("GOOGLE_PASSWORD"),
   mqtt_host: System.get_env("MQTT_HOST"),
@@ -16,8 +15,6 @@ config :robotica_face,
   ca_cert_file: System.get_env("CA_CERT_FILE"),
   mqtt_user_name: System.get_env("MQTT_USER_NAME"),
   mqtt_password: System.get_env("MQTT_PASSWORD")
-
-config :robotica_face, RoboticaFace.Repo, url: System.get_env("DATABASE_URL")
 
 # Configures the endpoint
 config :robotica_face, RoboticaFaceWeb.Endpoint,
@@ -27,13 +24,8 @@ config :robotica_face, RoboticaFaceWeb.Endpoint,
   render_errors: [view: RoboticaFaceWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: RoboticaFace.PubSub, adapter: Phoenix.PubSub.PG2]
 
-config :robotica_face, RoboticaFace.Auth.Guardian,
-  issuer: "robotica_face",
-  secret_key: System.get_env("GUARDIAN_SECRET")
-
-config :robotica_face, RoboticaFaceWeb.Auth.AuthAccessPipeline,
-  module: RoboticaFace.Auth.Guardian,
-  error_handler: RoboticaFaceWeb.Auth.AuthErrorHandler
+config :joken,
+  login_secret: System.get_env("LOGIN_SECRET")
 
 # Configures Elixir's Logger
 config :logger, :console,

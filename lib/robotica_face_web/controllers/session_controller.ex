@@ -1,14 +1,11 @@
 defmodule RoboticaFaceWeb.SessionController do
   use RoboticaFaceWeb, :controller
 
-  alias RoboticaFace.Accounts
-  alias RoboticaFace.Accounts.User
   alias RoboticaFace.Auth
   alias RoboticaFaceWeb.Router.Helpers, as: Routes
 
   def index(conn, _params) do
-    changeset = Accounts.change_user(%User{})
-    maybe_user = Guardian.Plug.current_resource(conn)
+    maybe_user = Auth.current_user(conn)
 
     message =
       if maybe_user != nil do
@@ -20,14 +17,13 @@ defmodule RoboticaFaceWeb.SessionController do
     conn
     |> put_flash(:info, message)
     |> render("index.html",
-      changeset: changeset,
       action: Routes.session_path(conn, :login),
       maybe_user: maybe_user
     )
   end
 
-  def login(conn, %{"user" => %{"email" => email, "password" => password}}) do
-    Auth.authenticate_user(email, password)
+  def login(conn, %{"token" => token}) do
+    Auth.authenticate_user(token)
     |> login_reply(conn)
   end
 

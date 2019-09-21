@@ -13,8 +13,7 @@
         <nav role="navigation">
           <ul>
           <%= if RoboticaFace.Auth.user_signed_in?(@conn) do %>
-            <li><strong><%= RoboticaFace.Auth.current_user(@conn).name %></strong></li>
-            <li><a href="<%= Routes.user_path(@conn, :index) %>">Users</a></li>
+            <li><strong><%= RoboticaFace.Auth.current_user(@conn)["name"] %></strong></li>
             <li><%= link "Logout", to: Routes.session_path(@conn, :logout), method: :post%></li>
           <% else %>
             <li><a href="<%= Routes.session_path(@conn, :index) %>">Login</a></li>

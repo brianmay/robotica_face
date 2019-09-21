@@ -1,5 +1,2 @@
-Application.ensure_all_started(:ecto)
-{:ok, _} = RoboticaFace.Repo.start_link()
 {:ok, _} = RoboticaFaceWeb.Endpoint.start_link()
 ExUnit.start()
-Ecto.Adapters.SQL.Sandbox.mode(RoboticaFace.Repo, :manual)

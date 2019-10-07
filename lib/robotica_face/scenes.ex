@@ -6,8 +6,8 @@ defmodule RoboticaFace.Execute do
 
   defmodule State do
     @type t :: %__MODULE__{
-        scenes: list(GenServer.server())
-    }
+            scenes: list(GenServer.server())
+          }
     defstruct scenes: []
   end
 
@@ -53,5 +53,4 @@ defmodule RoboticaFace.Execute do
     Logger.info("unregister web scene #{inspect(pid)} #{inspect(state.scenes)}")
     {:noreply, state}
   end
-
 end

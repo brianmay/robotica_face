@@ -6,8 +6,7 @@ defmodule RoboticaFace.RoboticaPlugin do
   require Logger
 
   defmodule State do
-    @type t :: %__MODULE__{
-    }
+    @type t :: %__MODULE__{}
     defstruct []
   end
 
@@ -23,5 +22,4 @@ defmodule RoboticaFace.RoboticaPlugin do
     RoboticaFace.Execute.execute(action)
     {:noreply, state}
   end
-
 end

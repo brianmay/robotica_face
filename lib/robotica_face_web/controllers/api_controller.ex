@@ -158,7 +158,7 @@ defmodule RoboticaFaceWeb.ApiController do
   def get_filtered_steps(params, now) do
     context = get_context(params, "task_filter")
     query = get_in(context, ["parameters", "query"])
-    {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule)
+    {:ok, steps} = RoboticaFace.Schedule.get_schedule()
 
     midnight =
       RoboticaFace.Date.tomorrow(now)
@@ -216,7 +216,7 @@ defmodule RoboticaFaceWeb.ApiController do
 
     case intent do
       "projects/robotica-3746c/agent/intents/c2b9befe-126f-4452-bc18-018f126f6beb" ->
-        {:ok, steps} = RoboticaFace.Schedule.get_schedule(:schedule)
+        {:ok, steps} = RoboticaFace.Schedule.get_schedule()
         now = Calendar.DateTime.now_utc()
 
         messages =

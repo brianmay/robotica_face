@@ -8,6 +8,7 @@ defmodule RoboticaFaceWeb.Router do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_flash
+    plug Phoenix.LiveView.Flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
   end
@@ -42,7 +43,6 @@ defmodule RoboticaFaceWeb.Router do
 
     scope "/schedule" do
       get "/", ScheduleController, :upcoming_list
-      post "/mark/:task_id/:status", ScheduleController, :mark
     end
   end
 

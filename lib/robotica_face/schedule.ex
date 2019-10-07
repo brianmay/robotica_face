@@ -2,6 +2,14 @@ defmodule RoboticaFace.Schedule do
   use GenServer
   use EventBus.EventSource
 
+  defmodule State do
+    @type t :: %__MODULE__{
+            scenes: list(GenServer.server()),
+            schedule: list(Robotica.Types.MultiStep.t())
+          }
+    defstruct scenes: [], schedule: []
+  end
+
   def start_link(default) do
     name = default[:name]
     GenServer.start_link(__MODULE__, nil, name: name)
@@ -14,22 +22,37 @@ defmodule RoboticaFace.Schedule do
       nil
     end
 
-    {:ok, %{}}
+    {:ok, %State{}}
   end
 
-  def set_schedule(pid, schedule) do
-    GenServer.call(pid, {:set_schedule, schedule})
+  @spec register(GenServer.server()) :: nil
+  def register(pid) do
+    GenServer.call(:schedule, {:register, pid})
   end
 
-  def get_schedule(pid) do
-    GenServer.call(pid, {:get_schedule})
+  def set_schedule(schedule) do
+    GenServer.call(:schedule, {:set_schedule, schedule})
   end
 
-  def get_tasks_by_id(pid, id) do
-    GenServer.call(pid, {:get_tasks_by_id, id})
+  def get_schedule() do
+    GenServer.call(:schedule, {:get_schedule})
+  end
+
+  def get_tasks_by_id(id) do
+    GenServer.call(:schedule, {:get_tasks_by_id, id})
+  end
+
+  def handle_call({:register, pid}, _from, state) do
+    Process.monitor(pid)
+    state = %State{state | scenes: [pid | state.scenes]}
+    {:reply, nil, state}
   end
 
   def handle_call({:set_schedule, schedule}, _, state) do
+    Enum.each(state.scenes, fn pid ->
+      GenServer.cast(pid, {:schedule, schedule})
+    end)
+
     {:reply, nil, Map.put(state, :schedule, schedule)}
   end
 
@@ -38,20 +61,19 @@ defmodule RoboticaFace.Schedule do
   end
 
   def handle_call({:get_tasks_by_id, id}, _, state) do
-    case Map.fetch(state, :schedule) do
-      {:ok, schedule} ->
-        tasks =
-          schedule
-          |> Enum.map(fn step ->
-            tasks = Enum.filter(step.tasks, fn task -> task.id == id end)
-            %{step | tasks: tasks}
-          end)
-          |> Enum.filter(fn step -> length(step.tasks) > 0 end)
+    tasks =
+      state.schedule
+      |> Enum.map(fn step ->
+        tasks = Enum.filter(step.tasks, fn task -> task.id == id end)
+        %{step | tasks: tasks}
+      end)
+      |> Enum.filter(fn step -> length(step.tasks) > 0 end)
 
-        {:reply, {:ok, tasks}, state}
+    {:reply, {:ok, tasks}, state}
+  end
 
-      :error ->
-        {:reply, :error, state}
-    end
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
+    state = %State{state | scenes: List.delete(state.scenes, pid)}
+    {:noreply, state}
   end
 end

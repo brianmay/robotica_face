@@ -6,7 +6,7 @@ defmodule RoboticaFace.RoboticaService do
   def process({:schedule = topic, id}) do
     steps = EventBus.fetch_event_data({topic, id})
 
-    RoboticaFace.Schedule.set_schedule(:schedule, steps)
+    RoboticaFace.Schedule.set_schedule(steps)
 
     EventBus.mark_as_completed({__MODULE__, topic, id})
   end

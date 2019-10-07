@@ -11,10 +11,12 @@ defmodule RoboticaFace.Application do
       # Start the endpoint when the application starts
       RoboticaFaceWeb.Endpoint,
       RoboticaFaceWeb.Strategy,
-      {RoboticaFace.Schedule, name: :schedule}
+      {RoboticaFace.Schedule, name: :schedule},
+      {RoboticaFace.Scenes, name: :scenes},
+
     ]
 
-    EventBus.subscribe({RoboticaFace.RoboticaService, ["^schedule"]})
+    EventBus.subscribe({RoboticaFace.RoboticaService, ["^schedule", "^execute"]})
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

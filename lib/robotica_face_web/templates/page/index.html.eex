@@ -19,3 +19,5 @@
     </ul>
   </article>
 </section>
+
+<%= Phoenix.LiveView.live_render(@conn, RoboticaFaceWeb.Live.Messages) %>

@@ -1,4 +1,4 @@
-defmodule RoboticaFace.Scenes do
+defmodule RoboticaFace.Execute do
   @moduledoc false
 
   use GenServer
@@ -26,11 +26,11 @@ defmodule RoboticaFace.Scenes do
 
   @spec register(GenServer.server()) :: nil
   def register(pid) do
-    GenServer.call(:scenes, {:register, pid})
+    GenServer.call(:execute, {:register, pid})
   end
 
   def execute(action) do
-    GenServer.call(:scenes, {:execute, action})
+    GenServer.call(:execute, {:execute, action})
   end
 
   def handle_call({:execute, action}, _from, state) do

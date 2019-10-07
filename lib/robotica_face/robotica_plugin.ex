@@ -20,7 +20,7 @@ defmodule RoboticaFace.RoboticaPlugin do
   end
 
   def handle_cast({:execute, action}, state) do
-    RoboticaFace.Scenes.execute(action)
+    RoboticaFace.Execute.execute(action)
     {:noreply, state}
   end
 

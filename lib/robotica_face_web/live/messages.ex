@@ -8,7 +8,7 @@ defmodule RoboticaFaceWeb.Live.Messages do
   end
 
   def mount(_, socket) do
-    RoboticaFace.Scenes.register(self())
+    RoboticaFace.Execute.register(self())
     {:ok, assign(socket, :action, nil)}
   end
 

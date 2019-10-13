@@ -54,75 +54,11 @@ jobs:
       - store_test_results:
           path: _build/test/lib/robotica_face
 
-  deploy-beta:
-    docker:
-      - image: circleci/elixir:1.8
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: |
-          docker build \
-            --file "Dockerfile" \
-            --tag "brianmay/robotica_face:latest" \
-            --build-arg "BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`" \
-            --build-arg "VCS_REF=$CIRCLE_SHA1" \
-            .
-          docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-          docker push "brianmay/robotica_face:latest"
-
-  verify-version:
-    docker:
-      - image: circleci/elixir:1.8
-    steps:
-      - checkout
-
-  deploy-prod-docker:
-    docker:
-      - image: circleci/python:3.7
-    steps:
-      - checkout # check out the code in the project directory
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and upload docker image
-          command: |
-            docker build \
-              --file "Dockerfile" \
-              --tag "brianmay/robotica_face:$CIRCLE_TAG" \
-              --build-arg "BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`" \
-              --build-arg "VCS_REF=$CIRCLE_SHA1" \
-              .
-            docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-            docker push "brianmay/robotica_face:$CIRCLE_TAG"
-
 workflows:
   version: 2
   build-deploy:
     jobs:
       - build:
-          filters:
-            tags:
-              only: /.*/
-      - deploy-beta:
-          context: Docker
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
-      - verify-version:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /[0-9]+(\.[0-9]+)*/
-            branches:
-              ignore: /.*/
-      - deploy-prod-docker:
-          context: Docker
-          requires:
-            - verify-version
           filters:
             tags:
               only: /.*/

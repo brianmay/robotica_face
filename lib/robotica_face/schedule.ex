@@ -27,19 +27,19 @@ defmodule RoboticaFace.Schedule do
 
   @spec register(GenServer.server()) :: nil
   def register(pid) do
-    GenServer.call(:schedule, {:register, pid})
+    GenServer.call(:face_schedule, {:register, pid})
   end
 
   def set_schedule(schedule) do
-    GenServer.call(:schedule, {:set_schedule, schedule})
+    GenServer.call(:face_schedule, {:set_schedule, schedule})
   end
 
   def get_schedule() do
-    GenServer.call(:schedule, {:get_schedule})
+    GenServer.call(:face_schedule, {:get_schedule})
   end
 
   def get_tasks_by_id(id) do
-    GenServer.call(:schedule, {:get_tasks_by_id, id})
+    GenServer.call(:face_schedule, {:get_tasks_by_id, id})
   end
 
   def handle_call({:register, pid}, _from, state) do

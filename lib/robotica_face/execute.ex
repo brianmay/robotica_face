@@ -26,26 +26,32 @@ defmodule RoboticaFace.Execute do
 
   @spec register(GenServer.server()) :: nil
   def register(pid) do
-    GenServer.call(:execute, {:register, pid})
+    GenServer.cast(:face_execute, {:register, pid})
   end
 
   def execute(action) do
-    GenServer.call(:execute, {:execute, action})
+    GenServer.cast(:face_execute, {:execute, action})
   end
 
-  def handle_call({:execute, action}, _from, state) do
+  def handle_cast({:execute, action}, state) do
     Enum.each(state.scenes, fn pid ->
       GenServer.cast(pid, {:execute, action})
     end)
 
-    {:reply, nil, state}
+    Process.sleep(10000)
+
+    Enum.each(state.scenes, fn pid ->
+      GenServer.cast(pid, :clear)
+    end)
+
+    {:noreply, state}
   end
 
-  def handle_call({:register, pid}, _from, state) do
+  def handle_cast({:register, pid}, state) do
     Process.monitor(pid)
     state = %State{state | scenes: [pid | state.scenes]}
     Logger.info("register web scene #{inspect(pid)} #{inspect(state.scenes)}")
-    {:reply, nil, state}
+    {:noreply, state}
   end
 
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do

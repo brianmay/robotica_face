@@ -45,8 +45,8 @@ defmodule RoboticaFace.MixProject do
       {:joken_jwks, "~> 1.0"},
       {:calendar, "~> 1.0.0"},
       {:timex, "~> 3.5"},
-      {:event_bus, "~> 1.6.0"},
-      {:robotica_plugins, path: "../robotica_plugins", optional: true}
+      {:event_bus, "~> 1.6.1"},
+      {:robotica_plugins, git: "https://github.com/brianmay/robotica-plugins.git"},
     ]
   end
 

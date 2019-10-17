@@ -2,55 +2,55 @@ defmodule RoboticaFace.Mark do
   alias RoboticaFace.Date
   use EventBus.EventSource
 
-  @spec publish_mark(String.t(), String.t(), DateTime) :: :ok | {:error, String.t()}
-  def publish_mark(id, status, expires_time) do
-    expires =
-      expires_time
-      |> Calendar.DateTime.shift_zone!("UTC")
-      |> Calendar.DateTime.Format.iso8601()
-
-    event_params = %{topic: :mark}
-
-    EventSource.notify event_params do
-      %RoboticaPlugins.Mark{
-        id: id,
-        status: status,
-        expires_time: expires
-      }
+  @spec publish_mark(RoboticaPlugin.Mark.t()) :: :ok | {:error, String.t()}
+  def publish_mark(mark) do
+    EventSource.notify %{topic: :mark} do
+      mark
     end
   end
 
-  def mark_task(task, status) do
-    id = task.id
-    frequency = task.frequency
+  def mark_task(step, status) do
+    id = step.task.id
     now = Calendar.DateTime.now_utc()
-    midnight = Date.tomorrow(now) |> Date.midnight_utc()
-    monday_midnight = Date.next_monday(now) |> Date.midnight_utc()
+    prev_midnight = Date.midnight_utc(step.required_time)
+    next_midnight = Date.tomorrow(step.required_time) |> Date.midnight_utc()
 
-    {expires_time, status} =
+    mark =
       case status do
-        "done" ->
-          case frequency do
-            "weekly" -> {monday_midnight, "done"}
-            _ -> {midnight, "done"}
-          end
+        :done ->
+          %RoboticaPlugins.Mark{
+            id: id,
+            status: :done,
+            start_time: prev_midnight,
+            stop_time: next_midnight
+          }
 
-        "postponed" ->
-          {midnight, "cancelled"}
+        :postponed ->
+          %RoboticaPlugins.Mark{
+            id: id,
+            status: :cancelled,
+            start_time: prev_midnight,
+            stop_time: next_midnight
+          }
 
-        "clear" ->
-          {now, "done"}
+        :clear ->
+          %RoboticaPlugins.Mark{
+            id: id,
+            status: :done,
+            start_time: now,
+            stop_time: now
+          }
 
         _ ->
-          {nil, nil}
+          nil
       end
 
-    case expires_time do
+    case mark do
       nil ->
         :error
 
       _ ->
-        publish_mark(id, status, expires_time)
+        publish_mark(mark)
         :ok
     end
   end

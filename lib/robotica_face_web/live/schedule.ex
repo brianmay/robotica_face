@@ -20,7 +20,7 @@ defmodule RoboticaFaceWeb.Live.Schedule do
             <tr>
               <td><%= date_time_to_local(step.required_time) %></td>
               <td><%= Enum.join(task.locations, ", ") %></td>
-              <td><%= get_action_message(task.action) %></td>
+              <td><%= get_task_message(task) %></td>
               <td><%= task.mark %></td>
               <td>
                 <button phx-click="mark" phx-value-mark="done" phx-value-step_time="<%= iso_time %>" phx-value-task_id="<%= task.id %>">Done</button>
@@ -58,11 +58,8 @@ defmodule RoboticaFaceWeb.Live.Schedule do
     end
   end
 
-  defp get_action_message(action) do
-    case action.message do
-      nil -> nil
-      message -> message.text
-    end
+  defp get_task_message(task) do
+    RoboticaPlugins.ScheduledTask.task_to_msg(task)
   end
 
   defp head_or_nil([]), do: nil
